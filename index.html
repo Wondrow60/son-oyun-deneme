@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Eşleştir - Türk Meme Oyunu</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .selected-card {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            border: 3px solid #3b82f6;
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Güncellenmiş Meme Verileri (Türk ve Global)
+        const allMemes = [
+            { id: 1, name: "Türk Annesi Teyze", description: "Her şeye karışan teyze bakışı", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/turk_anne_teyze.gif" },
+            { id: 2, name: "Ermiş Kermit", description: "Bilgece düşünen kurbağa", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/evil_kermit.gif" },
+            { id: 3, name: "Drake Meme", description: "Bir şeyi reddedip diğerini seçen Drake", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/drake_meme.jpg" },
+            { id: 4, name: "Komşu Dedikodu", description: "Balkonda dedikodu yapan teyze", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/komşu_dedikodu.gif" },
+            { id: 5, name: "Elektrik Faturası Şoku", description: "Faturayı gören Türk babası", imageUrl: "https:// patienter
+            { id: 6, name: "Distracted Boyfriend", description: "Kız arkadaşını dönüp bakan adam", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/distracted_boyfriend.jpg" },
+            { id: 7, name: "Surprised Pikachu", description: "Şok olmuş Pikachu", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/surprised_pikachu.jpg" },
+            { id: 8, name: "Woman Yelling at Cat", description: "Kediye bağıran kadın", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/woman_yelling_cat.jpg" },
+            { id: 9, name: "Hide the Pain Harold", description: "Acısını gizleyen Harold", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/hide_pain_harold.jpg" },
+            { id: 10, name: "Pepe the Frog", description: "Üzgün Pepe", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/pepe_frog.jpg" },
+            { id: 11, name: "Türk Dizi Aşk Sahnesi", description: "Abartılı aşk sahnesi", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/turk_dizi_ask.gif" },
+            { id: 12, name: "Stonks", description: "Saçma yatırım kararları", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/stonks.jpg" },
+            { id: 13, name: "Grumpy Cat", description: "Huysuz kedi", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/grumpy_cat.jpg" },
+            { id: 14, name: "Mahalle Baskısı", description: "Komşular ne der korkusu", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/mahalle_baskisi.gif" },
+            { id: 15, name: "Confused Math Lady", description: "Kafası karışmış kadın", imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/memes/confused_math_lady.gif" },
+        ];
+
+        // Güncellenmiş Cümleler
+        const sentences = [
+            "Annem 'Telefonu bırak yemeğe gel' dedi",
+            "Metrobüste yer kapma yarışı başladı",
+            "Komşu teyze yine dedikodu peşinde",
+            "Elektrik faturası babayı çıldırttı",
+            "WhatsApp grup sohbeti 999 mesajla doldu",
+            "Türk kahvesi bitti, evde kriz çıktı",
+            "Patron Zoom toplantısında uyuyakaldı",
+            "Teyze 'Kilo mu aldın sen?' dedi",
+            "İstanbul trafiğinde 2 saat sıkıştım",
+            "Annem 'Bu saatte nerede kaldın?' diye aradı",
+            "Baba 'Benzin fiyatları uçmuş!' diye bağırdı",
+            "Komşu çocukları sabah 5'te top oynuyor",
+            "Teyze 'Evlenmek için neyi bekliyorsun?' dedi",
+            "İnternet gitti, evde panik havası",
+            "Annem Facebook'ta sahte haber paylaştı",
+            "Baba 'Bu ne biçim kıyafet?' diye sordu",
+            "Komşu gece 3'te müzik açtı",
+            "Market sırasında 1 saat bekledim",
+            "Annem 'Odanı topla' diye 5. kez bağırdı",
+            "Taksi şoförü maç muhabbeti açtı",
+        ];
+
+        // Meme Kartı Componenti
+        const GameCard = ({ meme, isSelected, onClick, disabled = false }) => {
+            return (
+                <div 
+                    className={`bg-white rounded-lg shadow-lg cursor-pointer transition-all duration-300 card-hover ${
+                        isSelected ? 'selected-card' : ''
+                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={!disabled ? onClick : undefined}
+                    tabIndex={0}
+                    aria-label={`Meme kartı: ${meme.name}`}
+                    onKeyPress={(e) => !disabled && e.key === 'Enter' && onClick()}
+                >
+                    <div className="p-3">
+                        <div className="aspect-video bg-gray-200 rounded-lg mb-3 overflow-hidden">
+                            <img 
+                                src={meme.imageUrl} 
+                                alt={meme.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                            />
+                        </div>
+                        <h3 className="font-bold text-sm text-center text-gray-800 leading-tight">
+                            {meme.name}
+                        </h3>
+                        <p className="text-xs text-gray-600 text-center mt-1 leading-tight">
+                            {meme.description}
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Çok Oyunculu Oyun (Temel Yapı)
+        const MultiPlayerGame = ({ playerName, totalRounds, onBackToMenu, players }) => {
+            const [currentRound, setCurrentRound] = useState(1);
+            const [currentSentence, setCurrentSentence] = useState('');
+            const [playerCards, setPlayerCards] = useState([]);
+            const [selectedCard, setSelectedCard] = useState(null);
+            const [timeLeft, setTimeLeft] = useState(30);
+            const [totalScore, setTotalScore] = useState(0);
+            const [gameFinished, setGameFinished] = useState(false);
+            const [roundScore, setRoundScore] = useState(0);
+            const [showRoundResult, setShowRoundResult] = useState(false);
+            const [playerVotes, setPlayerVotes] = useState({});
+
+            useEffect(() => {
+                startNewRound();
+            }, []);
+
+            useEffect(() => {
+                if (timeLeft > 0 && !showRoundResult) {
+                    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+                    return () => clearTimeout(timer);
+                } else if (timeLeft === 0 && !showRoundResult) {
+                    handleTimeUp();
+                }
+            }, [timeLeft, showRoundResult]);
+
+            const startNewRound = () => {
+                const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
+                setCurrentSentence(randomSentence);
+                
+                const shuffledMemes = [...allMemes].sort(() => 0.5 - Math.random());
+                setPlayerCards(shuffledMemes.slice(0, 10));
+                
+                setSelectedCard(null);
+                setTimeLeft(30);
+                setRoundScore(0);
+                setShowRoundResult(false);
+                setPlayerVotes({});
+            };
+
+            const handleCardSelect = (meme) => {
+                setSelectedCard(meme);
+                // Backend'e seçimi gönder (ör. Firebase)
+                // Örnek: firebase.database().ref(`games/${gameId}/players/${playerName}`).set({ card: meme });
+            };
+
+            const handleSubmitCard = () => {
+                if (selectedCard) {
+                    const timeBonus = Math.floor(timeLeft * 0.5);
+                    const baseScore = 10;
+                    const voteScore = calculateVoteScore();
+                    const score = baseScore + timeBonus + voteScore;
+                    
+                    setRoundScore(score);
+                    setTotalScore(totalScore + score);
+                    setShowRoundResult(true);
+                }
+            };
+
+            const calculateVoteScore = () => {
+                // Örnek: Oyuncu oyları üzerinden puan hesaplama
+                return Object.values(playerVotes).filter(vote => vote.cardId === selectedCard?.id).length * 5;
+            };
+
+            const handleTimeUp = () => {
+                if (!selectedCard && playerCards.length > 0) {
+                    const randomCard = playerCards[Math.floor(Math.random() * playerCards.length)];
+                    setSelectedCard(randomCard);
+                }
+                setRoundScore(5);
+                setTotalScore(totalScore + 5);
+                setShowRoundResult(true);
+            };
+
+            const handleNextRound = () => {
+                if (currentRound >= totalRounds) {
+                    setGameFinished(true);
+                } else {
+                    setCurrentRound(currentRound + 1);
+                    startNewRound();
+                }
+            };
+
+            const handlePlayAgain = () => {
+                setCurrentRound(1);
+                setTotalScore(0);
+ _
+
+System: setGameFinished(false);
+                startNewRound();
+            };
+
+            const getFinalRating = () => {
+                const avgScore = totalScore / totalRounds;
+                if (avgScore >= 15) return { emoji: '🏆', text: 'Meme Ustası!', color: 'text-yellow-600' };
+                if (avgScore >= 12) return { emoji: '🎭', text: 'Komedi Dehası!', color: 'text-blue-600' };
+                if (avgScore >= 10) return { emoji: '😄', text: 'Eğlence Seviyoruz!', color: 'text-green-600' };
+                if (avgScore >= 8) return { emoji: '🙂', text: 'Fena Değil!', color: 'text-purple-600' };
+                return { emoji: '😅', text: 'Daha Çok Pratik Lazım!', color: 'text-orange-600' };
+            };
+
+            if (gameFinished) {
+                const rating = getFinalRating();
+                
+                return (
+                    <div className="gradient-bg p-4 fade-in">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
+                                <div className="text-center">
+                                    <div className="text-6xl mb-4">🎉</div>
+                                    <h1 className="text-4xl font-bold text-gray-800 mb-4">
+                                        Oyun Tamamlandı!
+                                    </h1>
+                                    <div className="text-2xl mb-4">{rating.emoji}</div>
+                                    <div className={`text-2xl font-bold ${rating.color} mb-2`}>
+                                        {rating.text}
+                                    </div>
+                                    <div className="text-xl text-gray-600">
+                                        Toplam Puan: <span className="font-bold">{totalScore}</span> / {totalRounds * 20}
+                                    </div>
+                                    <div className="text-lg text-gray-500">
+                                        Ortalama: {(totalScore / totalRounds).toFixed(1)} puan/tur
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                <div className="bg-blue-100 p-4 rounded-lg text-center">
+                                    <div className="text-2xl font-bold text-blue-600">{totalScore}</div>
+                                    <div className="text-sm text-blue-500">Toplam Puan</div>
+                                </div>
+                                <div className="bg-green-100 p-4 rounded-lg text-center">
+                                    <div className="text-2xl font-bold text-green-600">{Math.floor(totalScore / totalRounds)}</div>
+                                    <div className="text-sm text-green-500">Ortalama</div>
+                                </div>
+                                <div className="bg-purple-100 p-4 rounded-lg text-center">
+                                    <div className="text-2xl font-bold text-purple-600">{totalRounds}</div>
+                                    <div className="text-sm text-purple-500">Tur</div>
+                                </div>
+                                <div className="bg-orange-100 p-4 rounded-lg text-center">
+                                    <div className="text-2xl font-bold text-orange-600">{Math.floor((totalScore / (totalRounds * 20)) * 100)}%</div>
+                                    <div className="text-sm text-orange-500">Başarı</div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button 
+                                    onClick={handlePlayAgain}
+                                    className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all"
+                                >
+                                    🔄 Tekrar Oyna
+                                </button>
+                                <button 
+                                    onClick={onBackToMenu}
+                                    className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all"
+                                >
+                                    🏠 Ana Menü
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (showRoundResult) {
+                return (
+                    <div className="gradient-bg p-4 fade-in">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
+                                <div className="text-center">
+                                    <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                                        Tur {currentRound} Sonucu
+                                    </h1>
+                                    <div className="text-lg text-gray-600 mb-4">
+                                        Cümle: "{currentSentence}"
+                                    </div>
+                                    <div className="text-lg text-gray-600 mb-4">
+                                        Seçiminiz:
+                                    </div>
+                                    {selectedCard && (
+                                        <div className="max-w-sm mx-auto mb-6">
+                                            <GameCard 
+                                                meme={selectedCard}
+                                                disabled={true}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="text-3xl font-bold text-green-600 mb-2">
+                                        +{roundScore} Puan!
+                                    </div>
+                                    <div className="text-lg text-gray-600">
+                                        Toplam: {totalScore} puan
+                                    </div>
+                                    <div className="text-lg text-gray-600 mt-4">
+                                        Diğer Oyuncuların Seçtikleri:
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                                        {players.map((player, index) => (
+                                            <div key={index} className="bg-gray-100 p-4 rounded-lg">
+                                                <div className="text-sm font-bold">{player.name}</div>
+                                                <div className="text-sm text-gray-600">
+                                                    {player.card ? allMemes.find(meme => meme.id === player.card)?.name : 'Seçim Yapmadı'}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <button 
+                                    onClick={handleNextRound}
+                                    className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all"
+                                >
+                                    {currentRound >= totalRounds ? 'Oyunu Bitir' : `Tur ${currentRound + 1}'e Geç`}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="gradient-bg p-4 fade-in">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="text-xl font-bold">⏱️ {timeLeft}s</div>
+                                    <div className="bg-blue-100 px-3 py-1 rounded-full text-blue-800 font-semibold">
+                                        Tur {currentRound}/{totalRounds}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-lg font-semibold">⭐ {totalScore} puan</div>
+                                    <div className="text-sm text-gray-600">{playerName}</div>
+                                </div>
+                            </div>
+                            <div className="mt-4 bg-gray-200 rounded-full h-2">
+                                <div 
+                                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${(currentRound / totalRounds) * 100}%` }}
+                                ></div>
+                            </div>
+                            <div className="mt-4">
+                                <h3 className="text-sm font-semibold text-gray-700">Diğer Oyuncular:</h3>
+                                <div className="flex gap-2 flex-wrap mt-2">
+                                    {players.map((player, index) => (
+                                        <div key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">
+                                            {player.name}: {player.score || 0} puan
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sentence */}
+                        <div className="bg-yellow-100 rounded-lg shadow-lg p-6 mb-6">
+                            <div className="text-center">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                    📝 Bu cümleye en uygun meme'i seç:
+                                </h2>
+                                <p className="text-xl font-semibold text-gray-700 bg-white p-4 rounded-lg">
+                                    "{currentSentence}"
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                            {playerCards.map((meme) => (
+                                <GameCard
+                                    key={meme.id}
+                                    meme={meme}
+                                    isSelected={selectedCard?.id === meme.id}
+                                    onClick={() => handleCardSelect(meme)}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="text-center">
+                            <button 
+                                onClick={handleSubmitCard}
+                                disabled={!selectedCard}
+                                className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+                                    selectedCard 
+                                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            >
+                                🎯 Seçimi Gönder
+                            </button>
+                            {!selectedCard && (
+                                <p className="text-white mt-2 text-sm">
+                                    Bir meme seç ve gönder butonuna bas!
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Ana Menü
+        const MainMenu = ({ onStartGame }) => {
+            const [playerName, setPlayerName] = useState('');
+            const [totalRounds, setTotalRounds] = useState(10);
+            const [gameMode, setGameMode] = useState('single');
+            const [roomCode, setRoomCode] = useState('');
+
+            const handleStartGame = () => {
+                if (playerName.trim()) {
+                    if (gameMode === 'multi' && !roomCode) {
+                        alert('Lütfen bir oda kodu girin!');
+                        return;
+                    }
+                    onStartGame(playerName, totalRounds, gameMode, roomCode);
+                }
+            };
+
+            return (
+                <div className="gradient-bg p-4 fade-in">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-12">
+                            <div className="text-8xl mb-6">😂</div>
+                            <h1 className="text-6xl font-bold text-white mb-4">
+                                Meme Eşleştir
+                            </h1>
+                            <p className="text-xl text-white/80 mb-8">
+                                Türkiye'nin en komik meme'leri ve global viral içeriklerle dolu eğlenceli oyun!
+                            </p>
+                        </div>
+
+                        <div className="max-w-md mx-auto">
+                            <div className="bg-white rounded-lg shadow-xl p-8">
+                                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+                                    Oyuna Başla
+                                </h2>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Oyuncu Adın
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Adını gir..."
+                                            value={playerName}
+                                            onChange={(e) => setPlayerName(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            maxLength={20}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleStartGame();
+                                                }
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Oyun Modu
+                                        </label>
+                                        <select
+                                            value={gameMode}
+                                            onChange={(e) => setGameMode(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="single">Tek Oyunculu</option>
+                                            <option value="multi">Çok Oyunculu</option>
+                                        </select>
+                                    </div>
+
+                                    {gameMode === 'multi' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Oda Kodu
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Oda kodunu gir..."
+                                                value={roomCode}
+                                                onChange={(e) => setRoomCode(e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                maxLength={10}
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Tur Sayısı
+                                        </label>
+                                        <select
+                                            value={totalRounds}
+                                            onChange={(e) => setTotalRounds(parseInt(e.target.value))}
+                                            className="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value={5}>5 Tur (Hızlı)</option>
+                                            <option value={10}>10 Tur (Orta)</option>
+                                            <option value={15}>15 Tur (Uzun)</option>
+                                            <option value={20}>20 Tur (Epik)</option>
+                                            <option value={30}>30 Tur (Maraton)</option>
+                                        </select>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Tahmini süre: {Math.ceil(totalRounds * 1.5)} dakika
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={handleStartGame}
+                                        disabled={!playerName.trim() || (gameMode === 'multi' && !roomCode.trim())}
+                                        className={`w-full py-3 px-6 rounded-lg text-lg font-semibold transition-all ${
+                                            playerName.trim() && (gameMode === 'single' || roomCode.trim())
+                                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        🎯 {totalRounds} Turlu Oyunu Başlat
+                                    </button>
+                                </div>
+
+                                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                                    <h3 className="font-semibold text-blue-800 mb-2">Nasıl Oynanır:</h3>
+                                    <ul className="text-sm text-blue-700 space-y-1">
+                                        <li>• Tek veya arkadaşlarınla oyna</li>
+                                        <li>• Her turda 10 meme kartı seç</li>
+                                        <li>• Cümleye en uygun meme'i eşleştir</li>
+                                        <li>• Hızlı ol, bonus puan kazan!</li>
+                                        <li>• Çok oyunculu modda oylarla puan topla</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Ana Uygulama
+        const App = () => {
+            const [gameState, setGameState] = useState('menu'); // 'menu', 'playing'
+            const [playerName, setPlayerName] = useState('');
+            const [totalRounds, setTotalRounds] = useState(10);
+            const [gameMode, setGameMode] = useState('single');
+            const [roomCode, setRoomCode] = useState('');
+            const [players, setPlayers] = useState([]);
+
+            const handleStartGame = (name, rounds, mode, code) => {
+                setPlayerName(name);
+                setTotalRounds(rounds);
+                setGameMode(mode);
+                setRoomCode(code);
+                setGameState('playing');
+                if (mode === 'multi') {
+                    // Örnek: Firebase ile oyuncuları yükle
+                    setPlayers([{ name, score: 0 }, { name: 'Oyuncu 2', score: 0 }, { name: 'Oyuncu 3', score: 0 }]);
+                }
+            };
+
+            const handleBackToMenu = () => {
+                setGameState('menu');
+                setPlayers([]);
+            };
+
+            if (gameState === 'playing') {
+                return gameMode === 'single' ? (
+                    <SinglePlayerGame 
+                        playerName={playerName}
+                        totalRounds={totalRounds}
+                        onBackToMenu={handleBackToMenu}
+                    />
+                ) : (
+                    <MultiPlayerGame 
+                        playerName={playerName}
+                        totalRounds={totalRounds}
+                        onBackToMenu={handleBackToMenu}
+                        players={players}
+                    />
+                );
+            }
+
+            return (
+                <MainMenu 
+                    onStartGame={handleStartGame}
+                />
+            );
+        };
+
+        // Uygulamayı başlat
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
