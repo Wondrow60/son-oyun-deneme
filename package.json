@@ -1,16 +1,18 @@
 {
-  "name": "meme-eslestir",
-  "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'Building for Netlify' && cp index.html dist/",
-    "start": "serve dist"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@babel/standalone": "^7.20.0"
-  },
-  "devDependencies": {
-    "serve": "^14.2.0"
-  }
+    "name": "meme-eslestir",
+    "version": "1.0.0",
+    "description": "Türk ve global meme'lerle eşleştirme oyunu",
+    "scripts": {
+        "build": "mkdir -p dist && cp index.html dist/",
+        "start": "serve dist"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "@babel/standalone": "^7.20.0"
+    },
+    netlify
+    "devDependencies": {
+        "serve": "^14.2.0"
+    }
 }
